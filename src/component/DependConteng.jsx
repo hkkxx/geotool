@@ -22,11 +22,11 @@ import "prism-react-editor/invisibles.css"
 import "prism-react-editor/autocomplete.css"
 import "prism-react-editor/autocomplete-icons.css"
 import {io} from "socket.io-client";
-import {ws} from "../js/localStorage.js";
+import {ws} from "../js/socketContent.js";
 import {useDispatch, useSelector} from "react-redux";
 import {updateMianValue} from "../js/slice.js";
 
-// eslint-disable-next-line react/prop-types
+
 function MyExtensions({editor}) {
     useBracketMatcher(editor)
     useHightlightBracketPairs(editor)

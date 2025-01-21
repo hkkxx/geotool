@@ -1,5 +1,3 @@
-import express from 'express';
-import {createServer} from 'node:http';
 import {Server} from 'socket.io';
 
 let backValue = {
@@ -16,9 +14,7 @@ export function socketTarget() {
         path: "/geo",
         pingTimeout: 10000,
         connectionStateRecovery: {
-            // the backup duration of the sessions and the packets
             maxDisconnectionDuration: 2 * 60 * 1000,
-            // whether to skip middlewares upon successful recovery
             skipMiddlewares: true,
         }
     });

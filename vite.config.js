@@ -1,21 +1,27 @@
 import {defineConfig} from 'vite'
 import react from '@vitejs/plugin-react'
 import {nodePolyfills} from "vite-plugin-node-polyfills";
-import electron from 'vite-plugin-electron'
-import renderer from 'vite-plugin-electron-renderer'
+
 
 // https://vite.dev/config/
 export default defineConfig({
-    // server: {
-    //    open: 'src/nested/about.html'
-    //
-    // },
-    css: {
-        postcss: "postcss.config.js"
+    server: {
+        open: 'index.html',
     },
+    // css: {
+    //     preprocessorOptions: {
+    //         scss: {
+    //             api: 'modern-compiler', // or "modern", "legacy"
+    //             importers: [],
+    //         },
+    //     },
+    //     postcss: "postcss.config.js",
+    // },
+
     plugins: [
-        react(),
         nodePolyfills(),
+        react(),
+
     ],
     base: "./",
     build: {
@@ -26,14 +32,7 @@ export default defineConfig({
                 index: 'index.html',
                 page2: 'src/nested/page2.html',
                 page3: 'src/nested/page3.html',
-                about: 'src/nested/about.html'
-            },
-            // output: {
-            //     experimentalMinChunkSize: 200,
-            //     manualChunks: {
-            //         antdChunks: ["antd"]
-            //     }
-            // }
+            }
         }
     }
 })

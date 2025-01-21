@@ -1,5 +1,4 @@
 import {createRoot} from "react-dom/client";
-import JWD from "../component/JWD.jsx";
-import "../App.css"
+import JWD from "../layout/JWD.jsx";
 
 createRoot(document.getElementById("root")).render(<JWD/>);

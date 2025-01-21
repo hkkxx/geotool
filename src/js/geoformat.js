@@ -16,6 +16,7 @@ https://datatracker.ietf.org/doc/html/rfc7946#section-3.1.8
 const res = {result: false, msg: "no msg"}
 const geoJsonType = ["Feature", "FeatureCollection", 'Point', 'MultiPoint', 'LineString', 'MultiLineString', 'Polygon', 'MultiPolygon', 'GeometryCollection']
 export const geometryType = ['Point', 'MultiPoint', 'LineString', 'MultiLineString', 'Polygon', 'MultiPolygon', 'GeometryCollection']
+
 /*
  The GeoJSON object MAY have any number of other members.Implementations MUST ignore unrecognized members.
  */
@@ -360,6 +361,7 @@ function geoin(jsonStr) {
     }
     return {result: true, msg: "ok"}
 }
+
 // 生成antd table
 export function geotable(str) {
     if (Array.isArray(str["features"])) {
@@ -372,10 +374,14 @@ export function geotable(str) {
 
         for (let i in features) {
             let me = features[i]
+
+            if ((Object.keys(me["properties"]).find((item) => item === "")) !== undefined) {
+                throw new SyntaxError("geojson 语法异常:空白键")
+            }
+
             data[me['geometry']['type']].push({attr: me["properties"], skey: parseInt(i)})
             propKey.push(Object.keys(me.properties));
         }
-
         let datasource = []
         for (let i in geometryType) {
             let type = geometryType[i]
@@ -384,8 +390,55 @@ export function geotable(str) {
         propKey = Array.from(new Set(propKey.flat()));
         return {datasource, propKey}
     } else {
-        throw new SyntaxError("geojson 语法错误")
+        throw new SyntaxError("geojson 语法错误:1")
     }
+}
+
+
+export function geotable2(str) {
+    if (Array.isArray(str["features"])) {
+        let datasource2 = []
+        let propKey2 = [];
+        const features = Array.from(str["features"])
+        for (let i in features) {
+            let prop = features[i]['properties']
+
+            if (prop !== "" && (Object.keys(prop).find((item) => item === "")) !== undefined) {
+                throw new SyntaxError("geojson 语法异常:空白键")
+            }
+
+            prop['key'] = i
+            prop['type'] = features[i]['type']
+            prop['geometry'] = features[i]['geometry']
+            datasource2.push(prop)
+
+            propKey2.push(Object.keys(prop))
+        }
+        propKey2 = Array.from(new Set(propKey2.flat()));
+        propKey2 = propKey2.filter(item => !(item === "type" || item === "geometry"))
+        return {datasource2, propKey2}
+    } else {
+        throw new SyntaxError("geojson 语法错误:2")
+    }
+}
+
+export function tablegeo2(oldstr, tableData) {
+    let newVal = {"type": "FeatureCollection", "features": []}
+    for (let item of tableData) {
+        let prop = {}
+        for (let [k, v] of Object.entries(item)) {
+            if (k === "key" || k === "geometry" || k === "type") continue
+            prop[k] = v
+        }
+        Object.entries(item).filter((item) => item === "key")
+        let feature = {
+            "type": item["type"],
+            "properties": prop,
+            "geometry": item["geometry"]
+        }
+        newVal["features"].push(feature)
+    }
+    return newVal
 }
 
 export function any2str(obj) {
@@ -408,3 +461,4 @@ export function any2str(obj) {
             return "XXX";
     }
 }
+

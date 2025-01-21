@@ -1,18 +1,26 @@
 import {createSlice} from '@reduxjs/toolkit'
 
+// {
+//     "type": "FeatureCollection",
+//     "features": []
+// }
+
 export const counterSlice = createSlice({
     name: 'jsonReducer',
     initialState: {
-        taVal: JSON.stringify({
-            "type": "FeatureCollection",
-            "features": []
-        }),
+        taVal: JSON.stringify(
+            {
+                "type": "FeatureCollection",
+                "features": []
+            }
+        ),
         pageback: {
             content: JSON.stringify({
                 "type": "FeatureCollection",
                 "features": []
             }), fn: ""
-        }
+        },
+
     },
     reducers: {
         setgeoValue: (state, action) => {
@@ -23,7 +31,8 @@ export const counterSlice = createSlice({
         },
         updateMianfn: (state, action) => {
             state.pageback.fn = action.payload;
-        }
+        },
+
     }
 })
 

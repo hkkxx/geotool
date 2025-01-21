@@ -1,4 +1,4 @@
-import "./../App.css"
+import "../App.scss"
 import {Fragment, lazy, Suspense, useEffect} from "react";
 import {Alert, Spin} from "antd";
 import {useDispatch, useSelector} from "react-redux";

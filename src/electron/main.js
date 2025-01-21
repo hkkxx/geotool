@@ -1,13 +1,12 @@
-import {app, BrowserWindow, ipcMain} from "electron"
+import {app, BrowserWindow, ipcMain, dialog} from "electron"
 import process from "node:process";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
 import {Buffer} from "node:buffer";
-import {writeFile} from 'node:fs/promises';
-import {Menu, shell, screen} from "electron";
+import {writeFile} from 'node:fs';
+import {screen} from "electron";
 import "./appsocket.js"
 import {socketTarget} from "./appsocket.js";
-
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,87 +14,11 @@ const __dirname = path.dirname(__filename);
 let appWin = null;
 const minSize = {width: 400, height: 200,}
 
+// console.log(app.getAppPath().replaceAll("\\", "/") + "/dist-react/" + "geojgeoj.png");
+
+const basepath = app.getAppPath().replaceAll("\\", "/") + "/dist-react/"
+
 const createAppWindow = () => {
-
-
-    let aboutWin = null;
-    const showAbout = () => {
-        aboutWin = new BrowserWindow({
-            width: 400,
-            height: 200,
-            resizable: false,
-            minimizable: false,
-            show: false,
-            webPreferences: {
-                //多线程的Node.js
-                nodeIntegrationInWorker: true,
-                preload: path.join(__dirname, "preload.mjs"),
-            },
-            title: "about",
-            autoHideMenuBar: true,
-            modal: true,
-        })
-        aboutWin.loadFile(app.getAppPath().replaceAll("\\", "/") + "/dist-react/src/nested/" + "about.html").catch(err => console.log(err))
-    }
-
-    const template = [
-        {
-            label: 'File',
-            submenu: [
-                {role: 'close'},
-                {role: 'quit'}
-            ]
-        }, {
-            label: 'Edit',
-            submenu: [
-                {role: 'undo'},
-                {role: 'redo'},
-                {role: 'cut'},
-                {role: 'copy'},
-                {role: 'paste'}
-            ]
-        }, {
-            label: 'View',
-            submenu: [
-                {role: 'reload'},
-                {role: 'forceReload'},
-                {role: 'toggleDevTools'},
-                {type: 'separator'},
-                {role: 'resetZoom'},
-                {role: 'zoomIn'},
-                {role: 'zoomOut'},
-                {type: 'separator'},
-                {role: 'togglefullscreen'}
-            ]
-        }, {
-            label: 'Window',
-            submenu: [
-                {role: 'minimize'},
-                {role: 'zoom'},
-                {type: 'separator'},
-                {role: 'front'},
-                {type: 'separator'},
-                {role: 'window'}
-            ]
-        },
-        {
-            role: 'help',
-            submenu: [{
-                label: 'about',
-                click: () => {
-                    showAbout();
-                    aboutWin.show();
-                }
-            }, {
-                type: 'separator',
-            }, {
-                label: 'Learn More',
-                click: async () => {
-                    await shell.openExternal('https://electronjs.org')
-                }
-            }]
-        }]
-    const appMenu = Menu.buildFromTemplate(template)
 
     appWin = new BrowserWindow({
         minWidth: minSize.width,
@@ -109,14 +32,15 @@ const createAppWindow = () => {
         },
         title: "geo工具",
         autoHideMenuBar: false,
+        icon: app.getAppPath().replaceAll("\\", "/") + "/dist-react/" + "geoj.png",
         show: false
     })
-    appWin.setMenu(appMenu);
-    appWin.loadFile(app.getAppPath().replaceAll("\\", "/") + "/dist-react/" + "index.html").catch(err => console.log(err))
+
+    appWin.loadFile(basepath + "index.html").catch(err => console.log(err))
     appWin.once('ready-to-show', () => {
         let primaryDisplay = screen.getPrimaryDisplay()
         let {width, height} = primaryDisplay.workAreaSize
-        appWin.setSize(width > 1000 ? width / 5 * 2 : 600, height > 1500 ? height / 5 * 2 : 1000)
+        appWin.setSize(width > 1000 ? Math.floor(width / 2) : 600, height > 1500 ? Math.floor(height / 2) : 1000)
         appWin.show()
     })
 
@@ -138,7 +62,7 @@ const createjwd = () => {
         autoHideMenuBar: true,
         parent: appWin ? appWin : undefined
     })
-    win.loadFile(app.getAppPath().replaceAll("\\", "/") + "/dist-react/src/nested/" + "page2.html").catch(err => console.log(err))
+    win.loadFile(basepath + "src/nested/" + "page2.html").catch(err => console.log(err))
     win.once('ready-to-show', () => win.show())
 
 }
@@ -148,8 +72,8 @@ const createPage = () => {
     const pageWin = new BrowserWindow({
         minWidth: minSize.width,
         minHeight: minSize.height,
-        width: width > 1000 ? width / 5 * 2 : 600,
-        height: height > 1500 ? height / 5 * 2 : 1000,
+        width: width > 1000 ? Math.floor(width / 3) : 600,
+        height: height > 1500 ? Math.floor(height / 3) : 1000,
         webPreferences: {
             // node 集成
             //  nodeIntegration: true,
@@ -162,7 +86,7 @@ const createPage = () => {
         autoHideMenuBar: false,
         show: false
     })
-    pageWin.loadFile(app.getAppPath().replaceAll("\\", "/") + "/dist-react/src/nested/" + "page3.html").catch(err => console.log(err))
+    pageWin.loadFile(basepath + "src/nested/" + "page3.html").catch(err => console.log(err))
     pageWin.setPosition(appWin.getPosition()[0] + 100, appWin.getPosition()[1] + 30)
     pageWin.once('ready-to-show', () => {
         pageWin.show()
@@ -176,10 +100,27 @@ app.whenReady().then(() => {
     io = socketTarget();
     ipcMain.handle("saveFile", async (event, str) => {
         try {
-            const controller = new AbortController();
-            const {signal} = controller;
-            const data = new Uint8Array(Buffer.from((str)));
-            writeFile(`${new Date().toDateString()}.geojson`, data, {signal});
+            let p = await dialog.showOpenDialog(
+                {
+                    properties: ['openDirectory', 'createDirectory '],
+                    message: "选择要保存的文件路径"
+                }
+            ).then(result => {
+                return result.filePaths.length > 0 ? result.filePaths[0] : null
+            });
+
+            if (p !== null) {
+                let data = new Uint8Array(Buffer.from((str)));
+                let ap = path.join(p, `${new Date().toDateString()}.geojson`);
+
+                writeFile(ap, data, (err) => {
+                    console.log(err)
+                });
+                return {code: 0, msg: ap}
+            } else {
+                return {code: 1, msg: "canceled"}
+            }
+
             // controller.abort();
         } catch (err) {
             console.error(err);
@@ -195,6 +136,14 @@ app.whenReady().then(() => {
     ipcMain.handle("postData", () => {
         return dataToPage
     })
+    ipcMain.handle('getConfig', (event) => {
+
+    })
+    ipcMain.handle('checkHistory', (event) => {
+
+    })
+
+
     createAppWindow();
 })
 
